@@ -20,18 +20,21 @@ public final class ForwardJobService extends JobService {
     @Override
     public boolean onStartJob(JobParameters params) {
         executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            boolean needsReschedule = false;
-            try {
-                QueueProcessor.process(this);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                needsReschedule = true;
-            } catch (Exception e) {
-                Log.e(TAG, "Job queue processing failed", e);
-                needsReschedule = true;
-            } finally {
-                jobFinished(params, needsReschedule);
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                boolean needsReschedule = false;
+                try {
+                    QueueProcessor.process(ForwardJobService.this);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    needsReschedule = true;
+                } catch (Exception e) {
+                    Log.e(TAG, "Job queue processing failed", e);
+                    needsReschedule = true;
+                } finally {
+                    jobFinished(params, needsReschedule);
+                }
             }
         });
         return true;

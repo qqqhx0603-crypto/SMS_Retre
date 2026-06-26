@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -77,7 +78,12 @@ public final class MainActivity extends Activity {
         enabledSwitch = new Switch(this);
         enabledSwitch.setText("启用短信转发");
         enabledSwitch.setTextSize(16);
-        enabledSwitch.setOnCheckedChangeListener(this::onEnabledChanged);
+        enabledSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                onEnabledChanged(buttonView, isChecked);
+            }
+        });
         root.addView(enabledSwitch);
 
         senderEmailInput = input("发件 QQ 邮箱");
@@ -96,19 +102,39 @@ public final class MainActivity extends Activity {
         root.addView(recipientEmailInput);
 
         Button saveButton = button("保存配置");
-        saveButton.setOnClickListener(view -> saveConfig());
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                saveConfig();
+            }
+        });
         root.addView(saveButton);
 
         Button testButton = button("测试发送");
-        testButton.setOnClickListener(view -> testSend());
+        testButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                testSend();
+            }
+        });
         root.addView(testButton);
 
         Button retryButton = button("手动重试失败记录");
-        retryButton.setOnClickListener(view -> retryFailures());
+        retryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                retryFailures();
+            }
+        });
         root.addView(retryButton);
 
         Button refreshButton = button("刷新记录");
-        refreshButton.setOnClickListener(view -> refreshRecords());
+        refreshButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                refreshRecords();
+            }
+        });
         root.addView(refreshButton);
 
         statusView = text("", 14, false);
@@ -160,16 +186,29 @@ public final class MainActivity extends Activity {
             return;
         }
         setStatus("正在发送测试邮件...");
-        executor.execute(() -> {
-            try {
-                new MailSender().send(
-                        config,
-                        "SMS-Retre 测试邮件 " + TimeUtils.compact(System.currentTimeMillis()),
-                        "这是一封 SMS-Retre 测试邮件。\n\n如果你能收到，说明 QQ 邮箱 SMTP 配置可用。"
-                );
-                runOnUiThread(() -> setStatus("测试邮件发送成功。"));
-            } catch (Exception e) {
-                runOnUiThread(() -> setStatus("测试邮件发送失败：" + messageOf(e)));
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    new MailSender().send(
+                            config,
+                            "SMS-Retre 测试邮件 " + TimeUtils.compact(System.currentTimeMillis()),
+                            "这是一封 SMS-Retre 测试邮件。\n\n如果你能收到，说明 QQ 邮箱 SMTP 配置可用。"
+                    );
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            setStatus("测试邮件发送成功。");
+                        }
+                    });
+                } catch (final Exception e) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            setStatus("测试邮件发送失败：" + messageOf(e));
+                        }
+                    });
+                }
             }
         });
     }

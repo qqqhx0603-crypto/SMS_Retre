@@ -32,7 +32,12 @@ public final class SmsForwardService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         startForeground(Constants.NOTIFICATION_ID, buildNotification("正在处理短信转发队列"));
         if (processing.compareAndSet(false, true)) {
-            executor.execute(this::processQueue);
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processQueue();
+                }
+            });
         }
         return START_NOT_STICKY;
     }
