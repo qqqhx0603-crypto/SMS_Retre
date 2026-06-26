@@ -6,7 +6,7 @@ Build a self-use Android app that runs on the standby phone and forwards newly r
 
 ## First-version requirements
 
-- Project root: `D:\chatgpt\Tools\SMS-Retre`.
+- Project root: `D:\chatgpt\Tools\SMS_Retre`.
 - Receive new SMS only; do not read historical SMS.
 - Do not send SMS from the standby SIM.
 - Use QQ Mail SMTP SSL by default: `smtp.qq.com:465`.
