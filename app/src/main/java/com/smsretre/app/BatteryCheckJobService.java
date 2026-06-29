@@ -6,14 +6,12 @@ import android.app.job.JobScheduler;
 import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
-import android.util.Log;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public final class ForwardJobService extends JobService {
-    private static final String TAG = "ForwardJobService";
-
+public final class BatteryCheckJobService extends JobService {
+    private static final long FIFTEEN_MINUTES_MS = 15 * 60 * 1000L;
     private ExecutorService executor;
 
     @Override
@@ -22,17 +20,10 @@ public final class ForwardJobService extends JobService {
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                boolean needsReschedule = false;
                 try {
-                    QueueProcessor.process(ForwardJobService.this);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    needsReschedule = true;
-                } catch (Exception e) {
-                    Log.e(TAG, "Job queue processing failed", e);
-                    needsReschedule = true;
+                    BatteryAlertManager.checkAndEnqueue(BatteryCheckJobService.this);
                 } finally {
-                    jobFinished(params, needsReschedule);
+                    jobFinished(params, false);
                 }
             }
         });
@@ -47,16 +38,15 @@ public final class ForwardJobService extends JobService {
         return true;
     }
 
-    static void schedule(Context context) {
+    static void schedulePeriodic(Context context) {
         JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (scheduler == null) {
             return;
         }
-        ComponentName componentName = new ComponentName(context, ForwardJobService.class);
-        JobInfo jobInfo = new JobInfo.Builder(Constants.FORWARD_JOB_ID, componentName)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setMinimumLatency(0L)
-                .setOverrideDeadline(Constants.RETRY_INTERVAL_MS)
+        ComponentName componentName = new ComponentName(context, BatteryCheckJobService.class);
+        JobInfo jobInfo = new JobInfo.Builder(Constants.BATTERY_JOB_ID, componentName)
+                .setPeriodic(FIFTEEN_MINUTES_MS)
+                .setPersisted(true)
                 .build();
         scheduler.schedule(jobInfo);
     }

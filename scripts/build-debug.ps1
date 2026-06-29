@@ -18,7 +18,7 @@ $AlignedApk = Join-Path $BuildRoot "app-debug-aligned.apk"
 $OutputApk = Join-Path $ProjectRoot "build\outputs\apk\debug\app-debug.apk"
 $SourcesFile = Join-Path $BuildRoot "sources.txt"
 $ClassesJar = Join-Path $BuildRoot "classes.jar"
-$DebugKeystore = Join-Path $BuildRoot "debug.keystore"
+$DebugKeystore = Join-Path $ProjectRoot "signing\sms-retre-debug.keystore"
 
 $Aapt2 = Join-Path $SdkRoot "build-tools\35.0.0\aapt2.exe"
 $D8 = Join-Path $SdkRoot "build-tools\35.0.0\d8.bat"
@@ -44,6 +44,7 @@ function Invoke-Checked {
 
 Remove-Item -LiteralPath $BuildRoot -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $ClassesDir, $DexDir, $GeneratedDir, (Split-Path $OutputApk -Parent) | Out-Null
+New-Item -ItemType Directory -Force -Path (Split-Path $DebugKeystore -Parent) | Out-Null
 
 $ManifestText = Get-Content -LiteralPath (Join-Path $AppRoot "src\main\AndroidManifest.xml") -Raw
 if ($ManifestText -notmatch "\bpackage=") {
@@ -60,8 +61,8 @@ Invoke-Checked {
         --java $GeneratedDir `
         --min-sdk-version 26 `
         --target-sdk-version 35 `
-        --version-code 1 `
-        --version-name 0.1.0 `
+        --version-code 2 `
+        --version-name 0.2.0 `
         --auto-add-overlay `
         $CompiledRes
 }

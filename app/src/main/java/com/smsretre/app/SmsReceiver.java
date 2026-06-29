@@ -17,7 +17,8 @@ public final class SmsReceiver extends BroadcastReceiver {
         }
 
         ConfigStore configStore = new ConfigStore(context);
-        if (!configStore.load().enabled) {
+        MailConfig config = configStore.load();
+        if (!config.enabled) {
             Log.i(TAG, "SMS forwarding disabled; ignoring new SMS");
             return;
         }
@@ -51,11 +52,56 @@ public final class SmsReceiver extends BroadcastReceiver {
         }
 
         try {
+            ReceiverInfo receiverInfo = readReceiverInfo(intent, config);
             SmsDatabase database = new SmsDatabase(context);
-            database.insertPending(sender, receivedAt, content);
+            database.insertPendingSms(
+                    sender,
+                    receivedAt,
+                    content,
+                    receiverInfo.label,
+                    receiverInfo.slotIndex,
+                    receiverInfo.subscriptionId
+            );
             SmsForwardService.start(context);
         } catch (Exception e) {
             Log.e(TAG, "Failed to enqueue SMS", e);
+        }
+    }
+
+    private static ReceiverInfo readReceiverInfo(Intent intent, MailConfig config) {
+        int slotIndex = firstExistingIntExtra(intent, new String[]{
+                "android.telephony.extra.SLOT_INDEX",
+                "slot",
+                "simSlot",
+                "phone"
+        });
+        int subscriptionId = firstExistingIntExtra(intent, new String[]{
+                "android.telephony.extra.SUBSCRIPTION_INDEX",
+                "subscription",
+                "subId",
+                "subscriptionId"
+        });
+        return new ReceiverInfo(config.receiverLabelFor(slotIndex, subscriptionId), slotIndex, subscriptionId);
+    }
+
+    private static int firstExistingIntExtra(Intent intent, String[] keys) {
+        for (String key : keys) {
+            if (intent.hasExtra(key)) {
+                return intent.getIntExtra(key, -1);
+            }
+        }
+        return -1;
+    }
+
+    private static final class ReceiverInfo {
+        final String label;
+        final int slotIndex;
+        final int subscriptionId;
+
+        ReceiverInfo(String label, int slotIndex, int subscriptionId) {
+            this.label = label;
+            this.slotIndex = slotIndex;
+            this.subscriptionId = subscriptionId;
         }
     }
 }

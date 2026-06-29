@@ -10,3 +10,5 @@
 - Failed records remain queryable in the app and can be manually reset to pending for another five-minute retry window.
 - Android SDK is installed at `D:\env\android-sdk`. Because Gradle is not installed, v1 has a manual debug build script at `scripts/build-debug.ps1` that uses Android SDK build-tools directly.
 - If saving the SMTP authorization code fails with `caller-provided IV not permitted`, Android Keystore rejected caller-supplied AES-GCM IV. Encryption must call `cipher.init(ENCRYPT_MODE, key)` and persist `cipher.getIV()` with the ciphertext.
+- 2026-06-29: v0.2.0 increments `versionCode` to 2. Database migrated from v1 to v2 with `ALTER TABLE ADD COLUMN` only, preserving old queue records. Config keys for SMTP remain unchanged; SIM labels and battery alert state are additive SharedPreferences keys.
+- 2026-06-29: debug signing key moved to persistent `signing\sms-retre-debug.keystore`. Future builds must keep using this key, otherwise Android will reject overwrite installs or require uninstalling, which would lose app-private config/data.

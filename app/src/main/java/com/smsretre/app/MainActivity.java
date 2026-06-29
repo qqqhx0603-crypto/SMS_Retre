@@ -31,6 +31,8 @@ public final class MainActivity extends Activity {
     private EditText senderEmailInput;
     private EditText authCodeInput;
     private EditText recipientEmailInput;
+    private EditText sim1LabelInput;
+    private EditText sim2LabelInput;
     private TextView statusView;
     private TextView recordsView;
 
@@ -43,6 +45,8 @@ public final class MainActivity extends Activity {
         buildUi();
         loadConfig();
         requestRuntimePermissions();
+        BatteryCheckJobService.schedulePeriodic(this);
+        BatteryAlertManager.checkAndEnqueue(this);
         refreshRecords();
     }
 
@@ -101,6 +105,14 @@ public final class MainActivity extends Activity {
         root.addView(label("收件邮箱"));
         root.addView(recipientEmailInput);
 
+        sim1LabelInput = input("SIM1 接收号码或备注，例如 +447xxxx");
+        root.addView(label("SIM1 接收号码/备注"));
+        root.addView(sim1LabelInput);
+
+        sim2LabelInput = input("SIM2 接收号码或备注，可留空");
+        root.addView(label("SIM2 接收号码/备注"));
+        root.addView(sim2LabelInput);
+
         Button saveButton = button("保存配置");
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -157,6 +169,8 @@ public final class MainActivity extends Activity {
         enabledSwitch.setChecked(config.enabled);
         senderEmailInput.setText(config.senderEmail);
         recipientEmailInput.setText(config.recipientEmail);
+        sim1LabelInput.setText(config.sim1Label);
+        sim2LabelInput.setText(config.sim2Label);
         authCodeInput.setText("");
         setStatus(configStore.hasAuthCode() ? "已保存授权码。" : "尚未保存授权码。");
     }
@@ -167,12 +181,16 @@ public final class MainActivity extends Activity {
                     enabledSwitch.isChecked(),
                     senderEmailInput.getText().toString(),
                     recipientEmailInput.getText().toString(),
-                    authCodeInput.getText().toString()
+                    authCodeInput.getText().toString(),
+                    sim1LabelInput.getText().toString(),
+                    sim2LabelInput.getText().toString()
             );
             authCodeInput.setText("");
             MailConfig config = configStore.load();
             String suffix = config.isComplete() ? "配置完整。" : "配置未完整，请检查邮箱和授权码。";
             setStatus("已保存。" + suffix);
+            BatteryCheckJobService.schedulePeriodic(this);
+            BatteryAlertManager.checkAndEnqueue(this);
         } catch (Exception e) {
             setStatus("保存失败：" + messageOf(e));
         }
@@ -248,8 +266,15 @@ public final class MainActivity extends Activity {
         builder.append("#").append(record.id)
                 .append("  ").append(statusLabel(record.status))
                 .append("  ").append(TimeUtils.full(record.receivedAt))
+                .append("\n类型：").append(typeLabel(record.recordType))
                 .append("\n来源：").append(record.sender)
                 .append("\n尝试：").append(record.attemptCount).append(" 次");
+        if (SmsRecord.TYPE_SMS.equals(record.recordType)) {
+            builder.append("\n接收：").append(receiverLabel(record));
+        }
+        if (SmsRecord.TYPE_BATTERY.equals(record.recordType)) {
+            builder.append("\n电量：").append(record.batteryLevel).append("%");
+        }
         if (record.firstAttemptAt > 0L && SmsRecord.STATUS_PENDING.equals(record.status)) {
             builder.append("，已过 ")
                     .append(TimeUtils.durationSince(record.firstAttemptAt, System.currentTimeMillis()));
@@ -326,6 +351,22 @@ public final class MainActivity extends Activity {
             return "失败";
         }
         return "待发送";
+    }
+
+    private static String typeLabel(String type) {
+        if (SmsRecord.TYPE_BATTERY.equals(type)) {
+            return "电量提醒";
+        }
+        return "短信";
+    }
+
+    private static String receiverLabel(SmsRecord record) {
+        String label = record.receiverLabel == null || record.receiverLabel.trim().isEmpty()
+                ? "unknown"
+                : record.receiverLabel.trim();
+        String slot = record.receiverSlot < 0 ? "slot unknown" : "SIM" + (record.receiverSlot + 1);
+        String subId = record.receiverSubId < 0 ? "subId unknown" : "subId " + record.receiverSubId;
+        return label + " / " + slot + " / " + subId;
     }
 
     private static String preview(String value) {

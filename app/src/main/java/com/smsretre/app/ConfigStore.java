@@ -20,6 +20,9 @@ final class ConfigStore {
     private static final String KEY_SENDER = "sender_email";
     private static final String KEY_RECIPIENT = "recipient_email";
     private static final String KEY_AUTH_BLOB = "auth_blob";
+    private static final String KEY_SIM1_LABEL = "sim1_label";
+    private static final String KEY_SIM2_LABEL = "sim2_label";
+    private static final String KEY_BATTERY_ALERT_SENT = "battery_alert_sent";
     private static final String KEY_ALIAS = "sms_retre_smtp_auth";
     private static final String KEYSTORE = "AndroidKeyStore";
 
@@ -34,7 +37,9 @@ final class ConfigStore {
                 prefs.getBoolean(KEY_ENABLED, false),
                 prefs.getString(KEY_SENDER, ""),
                 getAuthCode(),
-                prefs.getString(KEY_RECIPIENT, "")
+                prefs.getString(KEY_RECIPIENT, ""),
+                prefs.getString(KEY_SIM1_LABEL, ""),
+                prefs.getString(KEY_SIM2_LABEL, "")
         );
     }
 
@@ -43,15 +48,25 @@ final class ConfigStore {
         return blob != null && !blob.isEmpty();
     }
 
-    void save(boolean enabled, String senderEmail, String recipientEmail, String authCodeIfChanged) throws Exception {
+    void save(boolean enabled, String senderEmail, String recipientEmail, String authCodeIfChanged, String sim1Label, String sim2Label) throws Exception {
         SharedPreferences.Editor editor = prefs.edit()
                 .putBoolean(KEY_ENABLED, enabled)
                 .putString(KEY_SENDER, senderEmail == null ? "" : senderEmail.trim())
-                .putString(KEY_RECIPIENT, recipientEmail == null ? "" : recipientEmail.trim());
+                .putString(KEY_RECIPIENT, recipientEmail == null ? "" : recipientEmail.trim())
+                .putString(KEY_SIM1_LABEL, sim1Label == null ? "" : sim1Label.trim())
+                .putString(KEY_SIM2_LABEL, sim2Label == null ? "" : sim2Label.trim());
         if (authCodeIfChanged != null && !authCodeIfChanged.trim().isEmpty()) {
             editor.putString(KEY_AUTH_BLOB, encrypt(authCodeIfChanged.trim()));
         }
         editor.apply();
+    }
+
+    boolean isBatteryAlertSent() {
+        return prefs.getBoolean(KEY_BATTERY_ALERT_SENT, false);
+    }
+
+    void setBatteryAlertSent(boolean sent) {
+        prefs.edit().putBoolean(KEY_BATTERY_ALERT_SENT, sent).apply();
     }
 
     private String getAuthCode() {

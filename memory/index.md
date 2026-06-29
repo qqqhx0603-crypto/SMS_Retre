@@ -15,6 +15,9 @@ Build a self-use Android app that runs on the standby phone and forwards newly r
 - After retry window expires, stop automatic retry and keep a failed record visible in the app.
 - Support manual retry of failed records from the app.
 - Make the package name stable for Clash Meta for Android per-app bypass: `com.smsretre.app`.
+- New APKs must bump `versionCode`/`versionName` so they can be installed over old APKs while preserving existing SharedPreferences and SQLite data.
+- SMS emails should identify which configured SIM/phone number received the message.
+- Battery alert should send one email when the phone is detected at 5% battery or lower, then reset after charging above 5%.
 
 ## Detail files
 
