@@ -5,3 +5,6 @@ local.properties
 *.iml
 .idea/
 .DS_Store
+SMS_Retre.apk
+signing/*.keystore
+signing/*.jks
