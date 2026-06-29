@@ -13,6 +13,18 @@ Current first-version assumptions:
 
 No mail credentials are stored in source code. Enter the QQ Mail address, SMTP authorization code, and destination mailbox in the app UI after installation.
 
+## Installation and updates
+
+For normal use, install the APK published in this repository's GitHub Releases. Do not build from source unless you intend to maintain your own signing key and update chain.
+
+Android only allows an installed app to be updated by another APK with the same package name and the same signing key. This project uses the package name `com.smsretre.app`.
+
+- If you installed an APK released by the project maintainer, install later APKs from the same maintainer to update in place and keep app data.
+- If you build the APK yourself, Android treats your build as signed by your own local key. Your builds can update your own builds, but they cannot update APKs signed by another key.
+- If Android reports a developer signature or package conflict, the installed app was signed with a different key. Back up or record the app settings, uninstall the old app, then install the new APK.
+
+The repository intentionally does not include the maintainer's signing key. Keep signing keys private; uploading them would allow anyone with repository access to produce updates accepted by already installed devices.
+
 ## Local debug build
 
 Install Android SDK to `D:\env\android-sdk`, then run:
