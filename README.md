@@ -136,3 +136,7 @@ signing\sms-retre-debug.keystore
 - 短信转发队列保存在 app 私有数据库中。
 - 短信内容会通过你配置的邮箱服务器发送到收件邮箱。
 - 本项目不适合上架应用商店，主要用于个人自用侧载。
+
+### 许可证
+
+本项目使用 MIT License，详见 [LICENSE](LICENSE)。
