@@ -21,6 +21,6 @@ Install Android SDK to `D:\env\android-sdk`, then run:
 powershell -ExecutionPolicy Bypass -File .\scripts\build-debug.ps1
 ```
 
-The debug APK is written to `build\outputs\apk\debug\app-debug.apk`.
+The debug APK is written to `build\outputs\apk\debug\app-debug.apk` and copied to the project root as `SMS_Retre.apk` for easy transfer.
 
 The debug signing key is fixed at `signing\sms-retre-debug.keystore` so later builds can be installed over earlier builds and preserve app data. Do not delete this file after installing an APK built from this project.

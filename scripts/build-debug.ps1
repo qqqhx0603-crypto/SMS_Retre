@@ -16,6 +16,7 @@ $UnsignedApk = Join-Path $BuildRoot "app-debug-unsigned.apk"
 $DexApk = Join-Path $BuildRoot "app-debug-with-dex.apk"
 $AlignedApk = Join-Path $BuildRoot "app-debug-aligned.apk"
 $OutputApk = Join-Path $ProjectRoot "build\outputs\apk\debug\app-debug.apk"
+$RootApk = Join-Path $ProjectRoot "SMS_Retre.apk"
 $SourcesFile = Join-Path $BuildRoot "sources.txt"
 $ClassesJar = Join-Path $BuildRoot "classes.jar"
 $DebugKeystore = Join-Path $ProjectRoot "signing\sms-retre-debug.keystore"
@@ -114,4 +115,6 @@ Invoke-Checked {
 }
 
 Invoke-Checked { & $ApkSigner verify --verbose $OutputApk }
+Copy-Item -LiteralPath $OutputApk -Destination $RootApk -Force
 Write-Host "Built APK: $OutputApk"
+Write-Host "Copied APK: $RootApk"
