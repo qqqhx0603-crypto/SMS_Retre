@@ -3,16 +3,19 @@ package com.smsretre.app;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.util.Log;
+
+import java.util.ArrayList;
 
 public final class SmsReceiver extends BroadcastReceiver {
     private static final String TAG = "SmsReceiver";
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent == null || !Telephony.Sms.Intents.SMS_RECEIVED_ACTION.equals(intent.getAction())) {
+        if (intent == null || !isSmsAction(intent.getAction())) {
             return;
         }
 
@@ -23,8 +26,9 @@ public final class SmsReceiver extends BroadcastReceiver {
             return;
         }
 
-        SmsMessage[] messages = Telephony.Sms.Intents.getMessagesFromIntent(intent);
-        if (messages == null || messages.length == 0) {
+        ArrayList<SmsMessage> messages = readMessages(intent);
+        if (messages.isEmpty()) {
+            Log.w(TAG, "SMS broadcast contains no readable messages: " + intent.getAction());
             return;
         }
 
@@ -32,17 +36,18 @@ public final class SmsReceiver extends BroadcastReceiver {
         long receivedAt = System.currentTimeMillis();
         StringBuilder body = new StringBuilder();
         for (SmsMessage message : messages) {
-            if (message == null) {
-                continue;
-            }
             if (sender.isEmpty() && message.getOriginatingAddress() != null) {
                 sender = message.getOriginatingAddress();
             }
             if (message.getTimestampMillis() > 0) {
                 receivedAt = message.getTimestampMillis();
             }
-            if (message.getMessageBody() != null) {
-                body.append(message.getMessageBody());
+            String part = message.getMessageBody();
+            if (part == null || part.isEmpty()) {
+                part = message.getDisplayMessageBody();
+            }
+            if (part != null) {
+                body.append(part);
             }
         }
 
@@ -66,6 +71,50 @@ public final class SmsReceiver extends BroadcastReceiver {
         } catch (Exception e) {
             Log.e(TAG, "Failed to enqueue SMS", e);
         }
+    }
+
+    private static boolean isSmsAction(String action) {
+        return Telephony.Sms.Intents.SMS_RECEIVED_ACTION.equals(action)
+                || Telephony.Sms.Intents.SMS_DELIVER_ACTION.equals(action);
+    }
+
+    private static ArrayList<SmsMessage> readMessages(Intent intent) {
+        ArrayList<SmsMessage> result = new ArrayList<>();
+        SmsMessage[] frameworkMessages = Telephony.Sms.Intents.getMessagesFromIntent(intent);
+        if (frameworkMessages != null) {
+            for (SmsMessage message : frameworkMessages) {
+                if (message != null) {
+                    result.add(message);
+                }
+            }
+        }
+        if (!result.isEmpty()) {
+            return result;
+        }
+
+        Bundle extras = intent.getExtras();
+        if (extras == null) {
+            return result;
+        }
+        Object[] pdus = (Object[]) extras.get("pdus");
+        if (pdus == null || pdus.length == 0) {
+            return result;
+        }
+        String format = extras.getString("format");
+        for (Object pdu : pdus) {
+            if (!(pdu instanceof byte[])) {
+                continue;
+            }
+            try {
+                SmsMessage message = SmsMessage.createFromPdu((byte[]) pdu, format);
+                if (message != null) {
+                    result.add(message);
+                }
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Failed to parse SMS PDU", e);
+            }
+        }
+        return result;
     }
 
     private static ReceiverInfo readReceiverInfo(Intent intent, MailConfig config) {

@@ -18,7 +18,7 @@ Build a self-use Android app that runs on the standby phone and forwards newly r
 - New APKs must bump `versionCode`/`versionName` so they can be installed over old APKs while preserving existing SharedPreferences and SQLite data.
 - Every successful build should also place a copy of the installable APK at project root: `D:\chatgpt\Tools\SMS_Retre\SMS_Retre.apk`.
 - SMS emails should identify which configured SIM/phone number received the message.
-- Battery alert should send one email when the phone is detected at 5% battery or lower, then reset after charging above 5%.
+- Battery alert should send one email when the phone is detected at 10% battery or lower, then reset after charging above 10%.
 
 ## Detail files
 
