@@ -11,8 +11,6 @@ final class Constants {
     static final long RETRY_INTERVAL_MS = 60 * 1000L;
     static final int MAX_ATTEMPTS = 6;
     static final int BATTERY_ALERT_LEVEL = 10;
-    static final long NOTIFICATION_FALLBACK_DELAY_MS = 12 * 1000L;
-    static final long NOTIFICATION_DEDUPE_WINDOW_MS = 2 * 60 * 1000L;
 
     static final String SMTP_HOST = "smtp.qq.com";
     static final int SMTP_SSL_PORT = 465;
