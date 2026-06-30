@@ -119,6 +119,23 @@ final class SmsDatabase extends SQLiteOpenHelper {
         }
     }
 
+    synchronized boolean existsSimilarSms(String sender, long receivedAt, String body) {
+        String sql = "SELECT 1 FROM " + TABLE
+                + " WHERE record_type = ? AND sender = ? AND body = ?"
+                + " AND received_at BETWEEN ? AND ? LIMIT 1";
+        long windowStart = receivedAt - 5000L;
+        long windowEnd = receivedAt + 5000L;
+        try (Cursor cursor = getReadableDatabase().rawQuery(sql, new String[]{
+                SmsRecord.TYPE_SMS,
+                emptyToUnknown(sender),
+                body,
+                String.valueOf(windowStart),
+                String.valueOf(windowEnd)
+        })) {
+            return cursor.moveToFirst();
+        }
+    }
+
     synchronized void markAttemptStarted(long id, long firstAttemptAt, int attemptCount, long now) {
         ContentValues values = new ContentValues();
         values.put("first_attempt_at", firstAttemptAt);
