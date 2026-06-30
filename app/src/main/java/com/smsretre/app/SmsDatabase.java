@@ -119,6 +119,19 @@ final class SmsDatabase extends SQLiteOpenHelper {
         }
     }
 
+    synchronized boolean hasRecentSmsBody(String body, long since) {
+        String sql = "SELECT 1 FROM " + TABLE
+                + " WHERE record_type = ? AND body = ? AND created_at >= ?"
+                + " LIMIT 1";
+        try (Cursor cursor = getReadableDatabase().rawQuery(sql, new String[]{
+                SmsRecord.TYPE_SMS,
+                body,
+                String.valueOf(since)
+        })) {
+            return cursor.moveToFirst();
+        }
+    }
+
     synchronized void markAttemptStarted(long id, long firstAttemptAt, int attemptCount, long now) {
         ContentValues values = new ContentValues();
         values.put("first_attempt_at", firstAttemptAt);

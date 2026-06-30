@@ -2,9 +2,11 @@ package com.smsretre.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.InputType;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -140,6 +142,15 @@ public final class MainActivity extends Activity {
         });
         root.addView(retryButton);
 
+        Button notificationAccessButton = button("打开通知访问设置");
+        notificationAccessButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openNotificationAccessSettings();
+            }
+        });
+        root.addView(notificationAccessButton);
+
         Button refreshButton = button("刷新记录");
         refreshButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -251,6 +262,7 @@ public final class MainActivity extends Activity {
         StringBuilder builder = new StringBuilder();
         builder.append("待发送：").append(pending)
                 .append("    失败：").append(failed)
+                .append("\n通知兜底：").append(notificationAccessLabel())
                 .append("\n\n最近记录：\n");
         if (records.isEmpty()) {
             builder.append("暂无记录。");
@@ -299,6 +311,14 @@ public final class MainActivity extends Activity {
         }
         if (!needed.isEmpty()) {
             requestPermissions(needed.toArray(new String[0]), 1001);
+        }
+    }
+
+    private void openNotificationAccessSettings() {
+        try {
+            startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+        } catch (Exception e) {
+            setStatus("打开通知访问设置失败：" + messageOf(e));
         }
     }
 
@@ -367,6 +387,16 @@ public final class MainActivity extends Activity {
         String slot = record.receiverSlot < 0 ? "slot unknown" : "SIM" + (record.receiverSlot + 1);
         String subId = record.receiverSubId < 0 ? "subId unknown" : "subId " + record.receiverSubId;
         return label + " / " + slot + " / " + subId;
+    }
+
+    private String notificationAccessLabel() {
+        String enabledListeners = Settings.Secure.getString(getContentResolver(), "enabled_notification_listeners");
+        if (enabledListeners == null || enabledListeners.trim().isEmpty()) {
+            return "未开启";
+        }
+        return enabledListeners.toLowerCase(Locale.US).contains(getPackageName().toLowerCase(Locale.US))
+                ? "已开启"
+                : "未开启";
     }
 
     private static String preview(String value) {
