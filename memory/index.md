@@ -7,7 +7,7 @@ Build a self-use Android app that runs on the standby phone and forwards newly r
 ## First-version requirements
 
 - Project root: `D:\chatgpt\Tools\SMS_Retre`.
-- Receive new SMS through broadcast and use recent inbox scanning as fallback when vendor systems do not broadcast some verification codes. Do not scan full SMS history.
+- Receive new SMS only; do not read historical SMS.
 - Do not send SMS from the standby SIM.
 - Use QQ Mail SMTP SSL by default: `smtp.qq.com:465`.
 - Store SMS forwarding jobs locally first, then send asynchronously.
@@ -18,7 +18,7 @@ Build a self-use Android app that runs on the standby phone and forwards newly r
 - New APKs must bump `versionCode`/`versionName` so they can be installed over old APKs while preserving existing SharedPreferences and SQLite data.
 - Every successful build should also place a copy of the installable APK at project root: `D:\chatgpt\Tools\SMS_Retre\SMS_Retre.apk`.
 - SMS emails should identify which configured SIM/phone number received the message.
-- Battery alert should send one email when the phone is detected at 10% battery or lower, then reset after charging above 10%.
+- Battery alert should send one email when the phone is detected at 5% battery or lower, then reset after charging above 5%.
 
 ## Detail files
 

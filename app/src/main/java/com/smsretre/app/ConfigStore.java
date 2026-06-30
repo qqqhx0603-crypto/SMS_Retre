@@ -23,7 +23,6 @@ final class ConfigStore {
     private static final String KEY_SIM1_LABEL = "sim1_label";
     private static final String KEY_SIM2_LABEL = "sim2_label";
     private static final String KEY_BATTERY_ALERT_SENT = "battery_alert_sent";
-    private static final String KEY_LAST_INBOX_SCAN_AT = "last_inbox_scan_at";
     private static final String KEY_ALIAS = "sms_retre_smtp_auth";
     private static final String KEYSTORE = "AndroidKeyStore";
 
@@ -68,14 +67,6 @@ final class ConfigStore {
 
     void setBatteryAlertSent(boolean sent) {
         prefs.edit().putBoolean(KEY_BATTERY_ALERT_SENT, sent).apply();
-    }
-
-    long getLastInboxScanAt() {
-        return prefs.getLong(KEY_LAST_INBOX_SCAN_AT, 0L);
-    }
-
-    void setLastInboxScanAt(long millis) {
-        prefs.edit().putLong(KEY_LAST_INBOX_SCAN_AT, millis).apply();
     }
 
     private String getAuthCode() {

@@ -46,9 +46,7 @@ public final class MainActivity extends Activity {
         loadConfig();
         requestRuntimePermissions();
         BatteryCheckJobService.schedulePeriodic(this);
-        SmsSweepJobService.schedulePeriodic(this);
         BatteryAlertManager.checkAndEnqueue(this);
-        SmsInboxScanner.scanRecent(this);
         refreshRecords();
     }
 
@@ -142,15 +140,6 @@ public final class MainActivity extends Activity {
         });
         root.addView(retryButton);
 
-        Button scanButton = button("扫描最近短信");
-        scanButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                scanRecentInbox();
-            }
-        });
-        root.addView(scanButton);
-
         Button refreshButton = button("刷新记录");
         refreshButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -201,9 +190,7 @@ public final class MainActivity extends Activity {
             String suffix = config.isComplete() ? "配置完整。" : "配置未完整，请检查邮箱和授权码。";
             setStatus("已保存。" + suffix);
             BatteryCheckJobService.schedulePeriodic(this);
-            SmsSweepJobService.schedulePeriodic(this);
             BatteryAlertManager.checkAndEnqueue(this);
-            SmsInboxScanner.scanRecent(this);
         } catch (Exception e) {
             setStatus("保存失败：" + messageOf(e));
         }
@@ -252,22 +239,6 @@ public final class MainActivity extends Activity {
             setStatus(String.format(Locale.US, "已重新加入 %d 条失败记录。", count));
         } else {
             setStatus("没有可重试的失败记录。");
-        }
-        refreshRecords();
-    }
-
-    private void scanRecentInbox() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                && checkSelfPermission(Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.READ_SMS}, 1002);
-            setStatus("请先授予读取短信权限，用于补漏扫描最近短信。");
-            return;
-        }
-        int inserted = SmsInboxScanner.scanRecent(this);
-        if (inserted > 0) {
-            setStatus(String.format(Locale.US, "已补漏加入 %d 条短信。", inserted));
-        } else {
-            setStatus("未发现需要补漏的最近短信。");
         }
         refreshRecords();
     }
@@ -321,9 +292,6 @@ public final class MainActivity extends Activity {
         ArrayList<String> needed = new ArrayList<>();
         if (checkSelfPermission(Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
             needed.add(Manifest.permission.RECEIVE_SMS);
-        }
-        if (checkSelfPermission(Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
-            needed.add(Manifest.permission.READ_SMS);
         }
         if (Build.VERSION.SDK_INT >= 33
                 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
