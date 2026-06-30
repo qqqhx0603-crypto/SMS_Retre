@@ -6,11 +6,15 @@ final class Constants {
     static final int NOTIFICATION_ID = 1962;
     static final int FORWARD_JOB_ID = 1962001;
     static final int BATTERY_JOB_ID = 1962002;
+    static final int INBOX_SCAN_JOB_ID = 1962003;
 
     static final long RETRY_WINDOW_MS = 5 * 60 * 1000L;
     static final long RETRY_INTERVAL_MS = 60 * 1000L;
     static final int MAX_ATTEMPTS = 6;
     static final int BATTERY_ALERT_LEVEL = 10;
+    static final long INBOX_SCAN_INTERVAL_MS = 60 * 60 * 1000L;
+    static final long INBOX_SCAN_OVERLAP_MS = 5 * 60 * 1000L;
+    static final long INBOX_SCAN_DUPLICATE_WINDOW_MS = 60 * 1000L;
 
     static final String SMTP_HOST = "smtp.qq.com";
     static final int SMTP_SSL_PORT = 465;

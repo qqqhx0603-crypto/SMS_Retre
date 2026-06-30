@@ -63,6 +63,20 @@ final class SmsDatabase extends SQLiteOpenHelper {
         return getWritableDatabase().insertOrThrow(TABLE, null, values);
     }
 
+    synchronized long insertScannedSentSms(String sender, long receivedAt, String body, String receiverLabel, int receiverSubId) {
+        ContentValues values = basePendingValues(sender, receivedAt, body, SmsRecord.TYPE_SMS);
+        long now = System.currentTimeMillis();
+        values.put("status", SmsRecord.STATUS_SENT);
+        values.put("attempt_count", 1);
+        values.put("first_attempt_at", now);
+        values.put("last_attempt_at", now);
+        values.put("sent_at", now);
+        values.put("receiver_label", emptyToUnknown(receiverLabel));
+        values.put("receiver_slot", -1);
+        values.put("receiver_sub_id", receiverSubId);
+        return getWritableDatabase().insertOrThrow(TABLE, null, values);
+    }
+
     synchronized long insertPendingBatteryAlert(int batteryLevel, long observedAt) {
         String body = "备用机电量只剩 " + batteryLevel + "%，请尽快充电。";
         ContentValues values = basePendingValues("SYSTEM", observedAt, body, SmsRecord.TYPE_BATTERY);
@@ -116,6 +130,24 @@ final class SmsDatabase extends SQLiteOpenHelper {
                 return cursor.getInt(0);
             }
             return 0;
+        }
+    }
+
+    synchronized boolean hasSimilarUnfailedSms(String sender, String body, long receivedAt, long windowMs) {
+        String sql = "SELECT 1 FROM " + TABLE
+                + " WHERE record_type = ? AND sender = ? AND body = ?"
+                + " AND status <> ?"
+                + " AND received_at BETWEEN ? AND ?"
+                + " LIMIT 1";
+        try (Cursor cursor = getReadableDatabase().rawQuery(sql, new String[]{
+                SmsRecord.TYPE_SMS,
+                emptyToUnknown(sender),
+                body,
+                SmsRecord.STATUS_FAILED,
+                String.valueOf(receivedAt - windowMs),
+                String.valueOf(receivedAt + windowMs)
+        })) {
+            return cursor.moveToFirst();
         }
     }
 

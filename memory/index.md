@@ -14,6 +14,7 @@ Build a self-use Android app that runs on the standby phone and forwards newly r
 - Retry failed mail sends for about five minutes: immediate attempt plus one attempt per minute, up to six attempts total.
 - After retry window expires, stop automatic retry and keep a failed record visible in the app.
 - Support manual retry of failed records from the app.
+- Periodically scan the system SMS inbox every 60 minutes by default and send one summary email for messages not already recorded by SMS-Retre. Do not send a summary email when no missed messages are found.
 - Make the package name stable for Clash Meta for Android per-app bypass: `com.smsretre.app`.
 - New APKs must bump `versionCode`/`versionName` so they can be installed over old APKs while preserving existing SharedPreferences and SQLite data.
 - Every successful build should also place a copy of the installable APK at project root: `D:\chatgpt\Tools\SMS_Retre\SMS_Retre.apk`.

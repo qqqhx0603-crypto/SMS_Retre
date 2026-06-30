@@ -46,6 +46,7 @@ public final class MainActivity extends Activity {
         loadConfig();
         requestRuntimePermissions();
         BatteryCheckJobService.schedulePeriodic(this);
+        InboxScanJobService.schedulePeriodic(this);
         BatteryAlertManager.checkAndEnqueue(this);
         refreshRecords();
     }
@@ -190,6 +191,7 @@ public final class MainActivity extends Activity {
             String suffix = config.isComplete() ? "配置完整。" : "配置未完整，请检查邮箱和授权码。";
             setStatus("已保存。" + suffix);
             BatteryCheckJobService.schedulePeriodic(this);
+            InboxScanJobService.schedulePeriodic(this);
             BatteryAlertManager.checkAndEnqueue(this);
         } catch (Exception e) {
             setStatus("保存失败：" + messageOf(e));
@@ -292,6 +294,9 @@ public final class MainActivity extends Activity {
         ArrayList<String> needed = new ArrayList<>();
         if (checkSelfPermission(Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
             needed.add(Manifest.permission.RECEIVE_SMS);
+        }
+        if (checkSelfPermission(Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
+            needed.add(Manifest.permission.READ_SMS);
         }
         if (Build.VERSION.SDK_INT >= 33
                 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {

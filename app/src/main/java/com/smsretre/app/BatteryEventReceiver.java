@@ -8,6 +8,7 @@ public final class BatteryEventReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         BatteryCheckJobService.schedulePeriodic(context);
+        InboxScanJobService.schedulePeriodic(context);
         BatteryAlertManager.checkAndEnqueue(context);
     }
 }
