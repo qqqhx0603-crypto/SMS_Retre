@@ -1,8 +1,10 @@
 package com.smsretre.app;
 
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Telephony;
 import android.telephony.SmsMessage;
@@ -21,10 +23,6 @@ public final class SmsReceiver extends BroadcastReceiver {
 
         ConfigStore configStore = new ConfigStore(context);
         MailConfig config = configStore.load();
-        if (!config.enabled) {
-            Log.i(TAG, "SMS forwarding disabled; ignoring new SMS");
-            return;
-        }
 
         ArrayList<SmsMessage> messages = readMessages(intent);
         if (messages.isEmpty()) {
@@ -58,7 +56,16 @@ public final class SmsReceiver extends BroadcastReceiver {
 
         try {
             ReceiverInfo receiverInfo = readReceiverInfo(intent, config);
+            writeToSystemInboxIfDefaultDelivery(context, intent, sender, receivedAt, content, receiverInfo.subscriptionId);
+            if (!config.enabled) {
+                Log.i(TAG, "SMS forwarding disabled; wrote default SMS delivery only");
+                return;
+            }
             SmsDatabase database = new SmsDatabase(context);
+            if (database.hasSimilarRecentSms(sender, content, receivedAt, Constants.SMS_DUPLICATE_WINDOW_MS)) {
+                Log.i(TAG, "Duplicate SMS broadcast skipped");
+                return;
+            }
             database.insertPendingSms(
                     sender,
                     receivedAt,
@@ -131,6 +138,34 @@ public final class SmsReceiver extends BroadcastReceiver {
                 "subscriptionId"
         });
         return new ReceiverInfo(config.receiverLabelFor(slotIndex, subscriptionId), slotIndex, subscriptionId);
+    }
+
+    private static void writeToSystemInboxIfDefaultDelivery(Context context, Intent intent, String sender, long receivedAt, String body, int subscriptionId) {
+        if (!Telephony.Sms.Intents.SMS_DELIVER_ACTION.equals(intent.getAction())) {
+            return;
+        }
+        String defaultSmsPackage = Telephony.Sms.getDefaultSmsPackage(context);
+        if (!context.getPackageName().equals(defaultSmsPackage)) {
+            return;
+        }
+
+        ContentValues values = new ContentValues();
+        values.put(Telephony.Sms.ADDRESS, sender);
+        values.put(Telephony.Sms.BODY, body);
+        values.put(Telephony.Sms.DATE, receivedAt);
+        values.put(Telephony.Sms.READ, 0);
+        values.put(Telephony.Sms.SEEN, 0);
+        values.put(Telephony.Sms.TYPE, Telephony.Sms.MESSAGE_TYPE_INBOX);
+        if (subscriptionId >= 0) {
+            values.put(Telephony.Sms.SUBSCRIPTION_ID, subscriptionId);
+        }
+
+        try {
+            Uri uri = context.getContentResolver().insert(Telephony.Sms.Inbox.CONTENT_URI, values);
+            Log.i(TAG, "Wrote SMS to system inbox: " + uri);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "Failed to write SMS to system inbox", e);
+        }
     }
 
     private static int firstExistingIntExtra(Intent intent, String[] keys) {

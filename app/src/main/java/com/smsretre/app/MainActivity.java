@@ -2,9 +2,12 @@ package com.smsretre.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.role.RoleManager;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Telephony;
 import android.text.InputType;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -33,6 +36,7 @@ public final class MainActivity extends Activity {
     private EditText recipientEmailInput;
     private EditText sim1LabelInput;
     private EditText sim2LabelInput;
+    private TextView defaultSmsView;
     private TextView statusView;
     private TextView recordsView;
 
@@ -53,6 +57,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        updateDefaultSmsStatus();
         refreshRecords();
     }
 
@@ -78,6 +83,10 @@ public final class MainActivity extends Activity {
         TextView packageName = text("包名：" + getPackageName(), 14, false);
         packageName.setPadding(0, dp(6), 0, dp(12));
         root.addView(packageName);
+
+        defaultSmsView = text("", 14, false);
+        defaultSmsView.setPadding(0, 0, 0, dp(8));
+        root.addView(defaultSmsView);
 
         enabledSwitch = new Switch(this);
         enabledSwitch.setText("启用短信转发");
@@ -131,6 +140,15 @@ public final class MainActivity extends Activity {
         });
         root.addView(testButton);
 
+        Button defaultSmsButton = button("设为默认短信App");
+        defaultSmsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                requestDefaultSmsRole();
+            }
+        });
+        root.addView(defaultSmsButton);
+
         Button retryButton = button("手动重试失败记录");
         retryButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -158,6 +176,7 @@ public final class MainActivity extends Activity {
         root.addView(recordsView);
 
         setContentView(scrollView);
+        updateDefaultSmsStatus();
     }
 
     private void onEnabledChanged(CompoundButton button, boolean checked) {
@@ -293,6 +312,9 @@ public final class MainActivity extends Activity {
         if (checkSelfPermission(Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
             needed.add(Manifest.permission.RECEIVE_SMS);
         }
+        if (checkSelfPermission(Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
+            needed.add(Manifest.permission.READ_SMS);
+        }
         if (Build.VERSION.SDK_INT >= 33
                 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             needed.add(Manifest.permission.POST_NOTIFICATIONS);
@@ -300,6 +322,40 @@ public final class MainActivity extends Activity {
         if (!needed.isEmpty()) {
             requestPermissions(needed.toArray(new String[0]), 1001);
         }
+    }
+
+    private void requestDefaultSmsRole() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                RoleManager roleManager = getSystemService(RoleManager.class);
+                if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_SMS)) {
+                    if (roleManager.isRoleHeld(RoleManager.ROLE_SMS)) {
+                        setStatus("SMS-Retre 已经是默认短信 App。");
+                        updateDefaultSmsStatus();
+                        return;
+                    }
+                    startActivityForResult(roleManager.createRequestRoleIntent(RoleManager.ROLE_SMS), 1002);
+                    return;
+                }
+            }
+
+            Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+            intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
+            startActivityForResult(intent, 1002);
+        } catch (Exception e) {
+            setStatus("请求默认短信 App 失败：" + messageOf(e));
+        }
+    }
+
+    private void updateDefaultSmsStatus() {
+        if (defaultSmsView == null) {
+            return;
+        }
+        String defaultPackage = Telephony.Sms.getDefaultSmsPackage(this);
+        boolean isDefault = getPackageName().equals(defaultPackage);
+        defaultSmsView.setText(isDefault
+                ? "默认短信 App：SMS-Retre"
+                : "默认短信 App：未设置为 SMS-Retre，当前为 " + (defaultPackage == null ? "unknown" : defaultPackage));
     }
 
     private TextView label(String value) {
