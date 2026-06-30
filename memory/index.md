@@ -9,7 +9,6 @@ Build a self-use Android app that runs on the standby phone and forwards newly r
 - Project root: `D:\chatgpt\Tools\SMS_Retre`.
 - Receive new SMS only; do not read historical SMS.
 - Do not send SMS from the standby SIM.
-- Can be used as the standby phone's default SMS app when vendor/OEM verification messages are not delivered through normal third-party SMS broadcasts.
 - Use QQ Mail SMTP SSL by default: `smtp.qq.com:465`.
 - Store SMS forwarding jobs locally first, then send asynchronously.
 - Retry failed mail sends for about five minutes: immediate attempt plus one attempt per minute, up to six attempts total.

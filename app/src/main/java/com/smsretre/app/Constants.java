@@ -9,7 +9,6 @@ final class Constants {
 
     static final long RETRY_WINDOW_MS = 5 * 60 * 1000L;
     static final long RETRY_INTERVAL_MS = 60 * 1000L;
-    static final long SMS_DUPLICATE_WINDOW_MS = 60 * 1000L;
     static final int MAX_ATTEMPTS = 6;
     static final int BATTERY_ALERT_LEVEL = 10;
 
