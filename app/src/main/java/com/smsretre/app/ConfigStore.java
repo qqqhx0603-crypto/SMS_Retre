@@ -24,6 +24,7 @@ final class ConfigStore {
     private static final String KEY_SIM2_LABEL = "sim2_label";
     private static final String KEY_BATTERY_ALERT_SENT = "battery_alert_sent";
     private static final String KEY_LAST_INBOX_SCAN_AT = "last_inbox_scan_at";
+    private static final String KEY_FIRST_RUN_NOTICE_SHOWN = "first_run_notice_shown";
     private static final String KEY_ALIAS = "sms_retre_smtp_auth";
     private static final String KEYSTORE = "AndroidKeyStore";
 
@@ -76,6 +77,14 @@ final class ConfigStore {
 
     void setLastInboxScanAt(long value) {
         prefs.edit().putLong(KEY_LAST_INBOX_SCAN_AT, value).apply();
+    }
+
+    boolean isFirstRunNoticeShown() {
+        return prefs.getBoolean(KEY_FIRST_RUN_NOTICE_SHOWN, false);
+    }
+
+    void setFirstRunNoticeShown() {
+        prefs.edit().putBoolean(KEY_FIRST_RUN_NOTICE_SHOWN, true).apply();
     }
 
     private String getAuthCode() {

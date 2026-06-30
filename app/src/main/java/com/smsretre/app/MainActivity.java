@@ -2,6 +2,8 @@ package com.smsretre.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -49,6 +51,7 @@ public final class MainActivity extends Activity {
         InboxScanJobService.schedulePeriodic(this);
         BatteryAlertManager.checkAndEnqueue(this);
         refreshRecords();
+        showFirstRunNoticeIfNeeded();
     }
 
     @Override
@@ -77,8 +80,12 @@ public final class MainActivity extends Activity {
         root.addView(title);
 
         TextView packageName = text("包名：" + getPackageName(), 14, false);
-        packageName.setPadding(0, dp(6), 0, dp(12));
+        packageName.setPadding(0, dp(6), 0, dp(8));
         root.addView(packageName);
+
+        TextView tutorial = text(tutorialText(), 14, false);
+        tutorial.setPadding(0, 0, 0, dp(12));
+        root.addView(tutorial);
 
         enabledSwitch = new Switch(this);
         enabledSwitch.setText("启用短信转发");
@@ -305,6 +312,32 @@ public final class MainActivity extends Activity {
         if (!needed.isEmpty()) {
             requestPermissions(needed.toArray(new String[0]), 1001);
         }
+    }
+
+    private void showFirstRunNoticeIfNeeded() {
+        if (configStore.isFirstRunNoticeShown()) {
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("重要：验证码安全保护")
+                .setMessage("如果备用机是 vivo / OriginOS，信息 App 里可能有“验证码安全保护”或“验证码保护”。这个开关会禁止第三方应用读取和使用验证码短信，导致普通短信能转发、验证码短信不能转发。\n\n请到 vivo 信息 App 的隐私保护设置里关闭这个开关，然后再测试验证码转发。\n\nSMS-Retre 还需要短信接收、短信读取和通知权限。")
+                .setPositiveButton("知道了", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        configStore.setFirstRunNoticeShown();
+                    }
+                })
+                .show();
+    }
+
+    private static String tutorialText() {
+        return "使用教程：\n"
+                + "1. 填写发件 QQ 邮箱、SMTP 授权码和收件邮箱。\n"
+                + "2. 填写 SIM1/SIM2 接收号码或备注，打开“启用短信转发”，然后保存配置。\n"
+                + "3. 先点“测试发送”，确认主手机邮箱能收到测试邮件。\n"
+                + "4. Clash Meta 全局代理时，把包名 com.smsretre.app 设为单独直连。\n"
+                + "5. vivo / OriginOS 需要关闭信息 App 的“验证码安全保护/验证码保护”。\n"
+                + "6. App 会自动转发新短信，并每 60 分钟扫描一次漏转短信汇总发送。";
     }
 
     private TextView label(String value) {

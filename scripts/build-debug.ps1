@@ -62,8 +62,8 @@ Invoke-Checked {
         --java $GeneratedDir `
         --min-sdk-version 26 `
         --target-sdk-version 35 `
-        --version-code 9 `
-        --version-name 0.4.2 `
+        --version-code 10 `
+        --version-name 0.4.3 `
         --auto-add-overlay `
         $CompiledRes
 }
